@@ -25,11 +25,29 @@ pygame.display.set_icon(pygame_icon)
 #Player Class
 
 class EthicalHacker(pygame.sprite.Sprite):
-    def __init__(self, x, y,):
+    def __init__(self, x, y, scale):
         pygame.sprite.Sprite.__init__(self)
+        img = pygame.image.load('img/player/Idle/0.png')
+        self.image = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
+        self.rect = self.image.get_rect()  # Fixed this line
+        self.rect.center = (x, y)
 
-    run = True
-    while run:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
+    def draw(self):
+        screen.blit(self.image, self.rect)
+
+player = EthicalHacker(200, 200, 3)
+player2 = EthicalHacker(400, 200, 3)
+
+run = True
+while run:
+    player.draw()
+    player2.draw()
+
+    for event in pygame.event.get():
+        #quit game
+        if event.type == pygame.QUIT:
+            run = False
+
+    pygame.display.update()
+
+pygame.quit()
