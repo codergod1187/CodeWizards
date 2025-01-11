@@ -19,7 +19,7 @@ pygame.display.set_icon(pygame_icon)
 clock = pygame.time.Clock()
 FPS = 60
 
-GRAVITY = 0.1
+GRAVITY = 0.30
 TILE_SIZE = 32
 
 moving_left = False
@@ -66,6 +66,9 @@ class EthicalHacker(pygame.sprite.Sprite):
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
         self.speed_boost_steps = 0  # Tracks remaining speed boost increments
+
+        #ai varaibles
+        self.move_counter = 0
 
         img = pygame.image.load(f'img/{self.char_type}/Idle/0.png').convert_alpha()
         img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
@@ -116,6 +119,22 @@ class EthicalHacker(pygame.sprite.Sprite):
             bullet = Bullet(self.rect.centerx + (0.2 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
             bullet_group.add(bullet)
             self.ammo -= 1
+
+    def ai(self):
+        if self.alive and player.alive:
+            if self.direction==1:
+                ai_moving_right = True
+            else:
+                ai_moving_right = False
+            ai_moving_left = not ai_moving_right
+            self.move(ai_moving_left, ai_moving_right)
+            self.move_counter += 1 
+
+            if self.move_counter > TILE_SIZE:
+                self.direction *= -1
+                self.move_counter *= -1
+
+    
 
     def update_animation(self):
         ANIMATION_COOLDOWN = 100
@@ -199,14 +218,18 @@ while run:
     clock.tick(FPS)
 
     draw_bg()
-
+ 
     player.update()
     bullet_group.update()
     item_box_group.update()
     player.draw()
     bullet_group.draw(screen)
-    virus.draw()
     item_box_group.draw(screen)
+
+    for virus in virus_group:
+        virus.ai()
+        virus.update()
+        virus.draw()
 
     for bullet in bullet_group:
         bullet.draw(screen)
