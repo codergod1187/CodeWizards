@@ -25,14 +25,22 @@ clock = pygame.time.Clock()
 FPS = 60
 
 GRAVITY = 0.75
-
+TILE_SIZE = 40
 
 moving_left = False
 moving_right = False
 shoot = False
 
 bullet_img = pygame.image.load('img/bullet.png').convert_alpha()
+shield_box_img = pygame.image.load('img/collectables/Shield.png').convert_alpha()
+key_box_img = pygame.image.load('img/collectables/Key.png').convert_alpha()
+speed_box_img= pygame.image.load('img/collectables/Speed.png').convert_alpha()
 
+item_boxes = {
+    'Shield': shield_box_img,
+    'Key': key_box_img,
+    'Speed': speed_box_img
+}
 
 BG = (50,50,50)
 RED = (255,0,0)
@@ -130,6 +138,14 @@ class EthicalHacker(pygame.sprite.Sprite):
             self.alive = False
     def draw(self):
         screen.blit(pygame.transform.flip(self.image, self.flip , False), self.rect)
+class ItemBox(pygame.sprite.Sprite):
+    def __init__(self, item_type, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.item_type = item_type
+        self.image = item_boxes[self.item_type]
+        self.rect = self.image.get_rect()
+        self.rect.midtop = (x + TILE_SIZE // 2,y + (TILE_SIZE - self.image.get_height()))
+
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         pygame.sprite.Sprite.__init__(self)
@@ -153,6 +169,15 @@ class Bullet(pygame.sprite.Sprite):
         screen.blit(pygame.transform.flip(self.image, self.flip , False), self.rect)
 bullet_group = pygame.sprite.Group()
 virus_group = pygame.sprite.Group()
+item_box_group = pygame.sprite.Group()
+
+item_box = ItemBox('Shield', 100, 300)
+item_box_group.add(item_box)
+item_box = ItemBox('Key', 400, 300)
+item_box_group.add(item_box)
+item_box = ItemBox('Speed', 500, 300)
+item_box_group.add(item_box)
+
 player = EthicalHacker('player',200, 200, 2 , 5 , 50)
 virus = EthicalHacker('virus',400, 200, 2 , 5 , 0)
 if pygame.sprite.spritecollide(player, virus_group, False):
@@ -166,11 +191,13 @@ while run:
     
     draw_bg()
 
-    player.draw()
     player.update()
-
+    bullet_group.update()
+    item_box_group.update()
+    player.draw()
+    bullet_group.draw(screen)
     virus.draw()
-
+    item_box_group.draw(screen)
     # Update bullets and handle virus collision
     bullet_group.update()
     for bullet in bullet_group:
