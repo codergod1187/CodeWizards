@@ -27,12 +27,10 @@ moving_right = False
 shoot = False
 
 bullet_img = pygame.image.load('img/bullet.png').convert_alpha()
-shield_box_img = pygame.image.load('img/Collectables/Shield.png').convert_alpha()
 key_box_img = pygame.image.load('img/Collectables/Key.png').convert_alpha()
 speed_box_img = pygame.image.load('img/Collectables/Speed.png').convert_alpha()
 
 item_boxes = {
-    'Shield': shield_box_img,
     'Key': key_box_img,
     'Speed': speed_box_img
 }
@@ -226,8 +224,7 @@ virus_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
 
 # Item Boxes
-item_box = ItemBox('Shield', 100, 268)
-item_box_group.add(item_box)
+
 item_box = ItemBox('Key', 400, 268)
 item_box_group.add(item_box)
 item_box = ItemBox('Speed', 500, 268)
@@ -313,4 +310,3 @@ while run:
     pygame.display.update()
 
 pygame.quit()
-
