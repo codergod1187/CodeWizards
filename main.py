@@ -25,7 +25,7 @@ clock = pygame.time.Clock()
 FPS = 60
 
 GRAVITY = 0.75
-TILE_SIZE = 40
+TILE_SIZE = 32
 
 moving_left = False
 moving_right = False
