@@ -42,12 +42,16 @@ def draw_bg():
 #Player Class
 
 class EthicalHacker(pygame.sprite.Sprite):
-    def __init__(self,char_type, x, y, scale , speed):
+    def __init__(self,char_type, x, y, scale , speed , ammo):
         pygame.sprite.Sprite.__init__(self)
         self.alive = True
         self.char_type = char_type
         self.speed = speed
+        self.ammo = ammo
+        self.start_ammo = ammo
         self.shoot_cooldown = 0
+        self.health = 100
+        self.max_health = 100
         self.direction = 1
         self.vel_y = 0
         self.jump = False
@@ -64,6 +68,8 @@ class EthicalHacker(pygame.sprite.Sprite):
         self.image = self.animation_list[self.frame_index]
         self.rect = self.image.get_rect()  
         self.rect.center = (x, y)
+        if char_type == 'virus' :
+            virus_group.add(self)
     def update(self):
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
@@ -95,13 +101,17 @@ class EthicalHacker(pygame.sprite.Sprite):
         self.rect.y += dy
     def update(self):
         self.update_animation()
+        self.check_alive()
         if self.shoot_cooldown > 0:
             self.shoot_cooldown -= 1
+
+        
     def shoot(self):
-        if self.shoot_cooldown == 0:
+        if self.shoot_cooldown == 0 and self.ammo > 0:
                 self.shoot_cooldown = 20
-                bullet = Bullet(self.rect.centerx + (0.6 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
+                bullet = Bullet(self.rect.centerx + (0.2 * self.rect.size[0] * self.direction), self.rect.centery, self.direction)
                 bullet_group.add(bullet)
+                self.ammo -= 1
     def update_animation(self):
 
         ANIMATION_COOLDOWN = 100
@@ -111,6 +121,13 @@ class EthicalHacker(pygame.sprite.Sprite):
         if self.frame_index >= len(self.animation_list):
             self.frame_index = 0
         self.image = self.animation_list[self.frame_index]        
+    def check_alive(self):
+        if self.health <= 0 and self.char_type == "player":
+            draw_bg()
+
+            self.health = 0
+            self.speed = 0
+            self.alive = False
     def draw(self):
         screen.blit(pygame.transform.flip(self.image, self.flip , False), self.rect)
 class Bullet(pygame.sprite.Sprite):
@@ -126,34 +143,57 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.x += self.speed * self.direction
         if self.rect.x <0 or self.rect.x > SCREEN_WIDTH:
             self.kill()  
+        
+        if pygame.sprite.spritecollide(virus, bullet_group , False):
+            if virus.alive:
+                virus.health -= 25
+                self.kill()
+            
     def draw(self,screen):
         screen.blit(pygame.transform.flip(self.image, self.flip , False), self.rect)
 bullet_group = pygame.sprite.Group()
-
-player = EthicalHacker('player',200, 200, 2 , 5)
-virus = EthicalHacker('virus',400, 200, 2 , 5)
-
+virus_group = pygame.sprite.Group()
+player = EthicalHacker('player',200, 200, 2 , 5 , 50)
+virus = EthicalHacker('virus',400, 200, 2 , 5 , 0)
+if pygame.sprite.spritecollide(player, virus_group, False):
+        player.health -= 100
+        if player.health <= 0:
+            player.health = 0
+            player.alive = False
 run = True
 while run:
     clock.tick(FPS)
-
+    
     draw_bg()
 
     player.draw()
-
     player.update()
 
     virus.draw()
 
+    # Update bullets and handle virus collision
     bullet_group.update()
     for bullet in bullet_group:
         bullet.draw(screen)
-    if player.alive :
+
+    if player.alive:
         if shoot:
             player.shoot()
-        player.move(moving_left,moving_right)
+        player.move(moving_left, moving_right)
+
+    # Check for player-virus collision
+    collided_viruses = pygame.sprite.spritecollide(player, virus_group, False)
+    if collided_viruses:
+        if player.alive:
+            player.health -= 100
+           
+            if player.health <= 0:
+                player.health = 0
+                player.alive = False
+                
+
+    # Event handling
     for event in pygame.event.get():
-        #quit game
         if event.type == pygame.QUIT:
             run = False
         if event.type == pygame.KEYDOWN:
@@ -167,8 +207,6 @@ while run:
                 player.jump = True 
             if event.key == pygame.K_ESCAPE:
                 run = False  
-            
-
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_a:
                 moving_left = False
@@ -176,7 +214,6 @@ while run:
                 moving_right = False       
             if event.key == pygame.K_SPACE:
                 shoot = False     
-           
 
     pygame.display.update()
 
