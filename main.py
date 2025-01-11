@@ -65,6 +65,7 @@ class EthicalHacker(pygame.sprite.Sprite):
         self.animation_list = []
         self.frame_index = 0
         self.update_time = pygame.time.get_ticks()
+        self.speed_boost_steps = 0  # Tracks remaining speed boost increments
 
         img = pygame.image.load(f'img/{self.char_type}/Idle/0.png').convert_alpha()
         img = pygame.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale)))
@@ -147,9 +148,9 @@ class ItemBox(pygame.sprite.Sprite):
     def update(self):
         if pygame.sprite.collide_rect(self, player):
             if self.item_type == 'Speed':
-                # Increase speed temporarily
-                player.speed += 5
-                pygame.time.set_timer(pygame.USEREVENT + 1, 5000)  # Speed boost lasts 5 seconds
+                # Gradual speed boost: increase speed by 0.5 every 100ms for 5 seconds
+                pygame.time.set_timer(pygame.USEREVENT + 1, 100)  # Trigger every 100ms
+                player.speed_boost_steps = 10  # Total increments (5 seconds total)
 
 # Bullet Class
 class Bullet(pygame.sprite.Sprite):
@@ -192,6 +193,7 @@ item_box_group.add(item_box)
 player = EthicalHacker('player', 200, 200, 2, 5, 50)
 virus = EthicalHacker('virus', 400, 200, 2, 5, 0)
 
+# Main Game Loop
 run = True
 while run:
     clock.tick(FPS)
@@ -223,7 +225,7 @@ while run:
                 player.health = 0
                 player.alive = False
 
-    
+    # Event handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
@@ -246,8 +248,14 @@ while run:
             if event.key == pygame.K_SPACE:
                 shoot = False
         if event.type == pygame.USEREVENT + 1:
-            # Reset speed after boost duration
-            player.speed = player.base_speed
+            # Gradually increase speed
+            if player.speed_boost_steps > 0:
+                player.speed += 0.5  # Increment speed slowly
+                player.speed_boost_steps -= 1
+            else:
+                # Reset the timer when the boost is complete
+                pygame.time.set_timer(pygame.USEREVENT + 1, 0)
+                player.speed = player.base_speed  # Reset to base speed
 
     pygame.display.update()
 
