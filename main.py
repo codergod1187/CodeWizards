@@ -1,6 +1,6 @@
 # Libraries
 import pygame
-
+import random
 # Initialize Pygame
 pygame.init()
 
@@ -19,7 +19,7 @@ pygame.display.set_icon(pygame_icon)
 clock = pygame.time.Clock()
 FPS = 60
 
-GRAVITY = 0.30
+GRAVITY = 0.75
 TILE_SIZE = 32
 
 moving_left = False
@@ -36,14 +36,27 @@ item_boxes = {
     'Key': key_box_img,
     'Speed': speed_box_img
 }
+num_1 = random.randint(0, 9)
+num_2 = random.randint(0, 9)
+num_3 = random.randint(0, 9)
+num_4 = random.randint(0, 9)
 
+key_nums = {
+    1 : num_1,
+    2 : num_2,
+    3 : num_3,
+    4 : num_4
+    }
 BG = (50, 50, 50)
 RED = (255, 0, 0)
 
 def draw_bg():
     screen.fill(BG)
     pygame.draw.line(screen, RED, (0, 300), (SCREEN_WIDTH, 300))
-
+pygame.font.init()
+font = pygame.font.Font("freesansbold.ttf",32)
+fontX = 15
+fontY = 15
 # Player Class
 class EthicalHacker(pygame.sprite.Sprite):
     def __init__(self, char_type, x, y, scale, speed, ammo):
@@ -51,8 +64,10 @@ class EthicalHacker(pygame.sprite.Sprite):
         self.alive = True
         self.char_type = char_type
         self.speed = speed
+        self.max_speed = 20
         self.base_speed = speed  # Store the base speed for resetting after boost
         self.ammo = ammo
+        self.keys = 0
         self.start_ammo = ammo
         self.shoot_cooldown = 0
         self.health = 100
@@ -121,18 +136,24 @@ class EthicalHacker(pygame.sprite.Sprite):
             self.ammo -= 1
 
     def ai(self):
-        if self.alive and player.alive:
-            if self.direction==1:
-                ai_moving_right = True
-            else:
-                ai_moving_right = False
-            ai_moving_left = not ai_moving_right
-            self.move(ai_moving_left, ai_moving_right)
-            self.move_counter += 1 
+        if self.char_type == 'virus':
+            if self.health <= 0:
+                self.health = 0
+                self.alive = False
+                self.kill()
+                
+            if self.alive and player.alive:
+                if self.direction==1:
+                    ai_moving_right = True
+                else:
+                    ai_moving_right = False
+                ai_moving_left = not ai_moving_right
+                self.move(ai_moving_left, ai_moving_right)
+                self.move_counter += 1 
 
-            if self.move_counter > TILE_SIZE:
-                self.direction *= -1
-                self.move_counter *= -1
+                if self.move_counter > TILE_SIZE:
+                    self.direction *= -1
+                    self.move_counter *= -1
 
     
 
@@ -166,10 +187,14 @@ class ItemBox(pygame.sprite.Sprite):
 
     def update(self):
         if pygame.sprite.collide_rect(self, player):
+            if self.item_type == 'Key':
+                player.keys += 1
+
             if self.item_type == 'Speed':
                 # Gradual speed boost: increase speed by 0.5 every 100ms for 5 seconds
                 pygame.time.set_timer(pygame.USEREVENT + 1, 100)  # Trigger every 100ms
-                player.speed_boost_steps = 10  # Total increments (5 seconds total)
+                player.speed_boost_steps += 20  # Total increments (5 seconds total)
+            self.kill()
 
 # Bullet Class
 class Bullet(pygame.sprite.Sprite):
@@ -209,15 +234,21 @@ item_box = ItemBox('Speed', 500, 268)
 item_box_group.add(item_box)
 
 # Player and Virus
-player = EthicalHacker('player', 200, 200, 2, 5, 50)
+player = EthicalHacker('player', 200, 200, 1, 5, 50)
 virus = EthicalHacker('virus', 400, 200, 2, 5, 0)
-
+def display_ammo(x,y):
+    score_img = font.render(f"Ammo : {player.ammo}", True ,( 255 , 255 ,255))
+    screen.blit(score_img, (x, y))
+def display_keys(x,y):
+    score_img = font.render(f"Keys : {player.keys}", True ,( 255 , 255 ,255))
+    screen.blit(score_img, (x, y))
 # Main Game Loop
 run = True
 while run:
     clock.tick(FPS)
-
     draw_bg()
+    display_ammo(fontX, fontY)
+    display_keys(fontX , fontY + 40)
  
     player.update()
     bullet_group.update()
@@ -279,7 +310,7 @@ while run:
                 # Reset the timer when the boost is complete
                 pygame.time.set_timer(pygame.USEREVENT + 1, 0)
                 player.speed = player.base_speed  # Reset to base speed
-
     pygame.display.update()
 
 pygame.quit()
+
