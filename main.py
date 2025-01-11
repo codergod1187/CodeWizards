@@ -32,9 +32,9 @@ moving_right = False
 shoot = False
 
 bullet_img = pygame.image.load('img/bullet.png').convert_alpha()
-shield_box_img = pygame.image.load('img/Collectables/Shield.png').convert_alpha()
-key_box_img = pygame.image.load('img/Collectables/Key.png').convert_alpha()
-speed_box_img= pygame.image.load('img/Collectables/Speed.png').convert_alpha()
+shield_box_img = pygame.image.load('img/collectables/Shield.png').convert_alpha()
+key_box_img = pygame.image.load('img/collectables/Key.png').convert_alpha()
+speed_box_img= pygame.image.load('img/collectables/Speed.png').convert_alpha()
 
 item_boxes = {
     'Shield': shield_box_img,
@@ -60,6 +60,7 @@ class EthicalHacker(pygame.sprite.Sprite):
         self.shoot_cooldown = 0
         self.health = 100
         self.max_health = 100
+        self.shield = 0
         self.direction = 1
         self.vel_y = 0
         self.jump = False
@@ -138,6 +139,11 @@ class EthicalHacker(pygame.sprite.Sprite):
             self.alive = False
     def draw(self):
         screen.blit(pygame.transform.flip(self.image, self.flip , False), self.rect)
+    def collide_with_virus(self):
+        if self.shield > 0:  # If the player has a shield, no damage is taken
+            self.shield -= 1  # Shield is used up after collision
+        else:
+            self.health -= 100
 class ItemBox(pygame.sprite.Sprite):
     def __init__(self, item_type, x, y):
         pygame.sprite.Sprite.__init__(self)
@@ -145,13 +151,11 @@ class ItemBox(pygame.sprite.Sprite):
         self.image = item_boxes[self.item_type]
         self.rect = self.image.get_rect()
         self.rect.midtop = (x + TILE_SIZE // 2,y + (TILE_SIZE - self.image.get_height()))
-
     def update(self):
         if pygame.sprite.collide_rect(self, player):
             if self.item_type == 'Shield':
+                player.shield += 1
                 
-
-
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         pygame.sprite.Sprite.__init__(self)
@@ -166,10 +170,6 @@ class Bullet(pygame.sprite.Sprite):
         if self.rect.x <0 or self.rect.x > SCREEN_WIDTH:
             self.kill()  
         
-        if pygame.sprite.spritecollide(virus, bullet_group , False):
-            if virus.alive:
-                virus.health -= 25
-                self.kill()
             
     def draw(self,screen):
         screen.blit(pygame.transform.flip(self.image, self.flip , False), self.rect)
@@ -177,20 +177,16 @@ bullet_group = pygame.sprite.Group()
 virus_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
 
-item_box = ItemBox('Shield', 100, 266)
+item_box = ItemBox('Shield', 100, 268)
 item_box_group.add(item_box)
-item_box = ItemBox('Key', 400, 266)
+item_box = ItemBox('Key', 400, 268)
 item_box_group.add(item_box)
-item_box = ItemBox('Speed', 500, 266)
+item_box = ItemBox('Speed', 500, 268)
 item_box_group.add(item_box)
 
 player = EthicalHacker('player',200, 200, 2 , 5 , 50)
 virus = EthicalHacker('virus',400, 200, 2 , 5 , 0)
-if pygame.sprite.spritecollide(player, virus_group, False):
-        player.health -= 100
-        if player.health <= 0:
-            player.health = 0
-            player.alive = False
+
 run = True
 while run:
     clock.tick(FPS)
@@ -214,15 +210,24 @@ while run:
             player.shoot()
         player.move(moving_left, moving_right)
 
-    # Check for player-virus collision
-    collided_viruses = pygame.sprite.spritecollide(player, virus_group, False)
-    if collided_viruses:
-        if player.alive:
-            player.health -= 100
-           
-            if player.health <= 0:
-                player.health = 0
-                player.alive = False
+
+is_colliding = False
+
+
+collided_viruses = pygame.sprite.spritecollide(player, virus_group, False)
+
+if collided_viruses:
+    if player.alive and not is_colliding:
+       
+        is_colliding = True  
+        player.shield -= 1  
+    else:
+        player.health -= 100 
+        if player.health <= 0:
+            player.alive = False
+else:
+
+    is_colliding = False
                 
 
     # Event handling
