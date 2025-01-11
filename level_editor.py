@@ -15,12 +15,11 @@ SIDE_MARGIN = 300
 screen = pygame.display.set_mode((SCREEN_WIDTH + SIDE_MARGIN, SCREEN_HEIGHT + LOWER_MARGIN))
 pygame.display.set_caption('Level Editor for Firewall Frenzy')
 
-
 # Game Variables
 ROWS = 16
 MAX_COLS = 150
 TILE_SIZE = SCREEN_HEIGHT // ROWS
-
+TILE_TYPES = 12
 scroll_left = False
 scroll_right = False
 scroll = 0
@@ -29,6 +28,13 @@ scroll_speed = 1
 # Load Images
 Background = pygame.image.load('img/Level Editor/background.png')
 Building = pygame.image.load('img/Level Editor/buildings.png')
+
+# List for Tiles
+tiles_list = []
+for x in range(TILE_TYPES):
+    imgs = pygame.image.load(f'img/Tiles/{x}.png')
+    imgs = pygame.transform.scale(imgs, (TILE_SIZE, TILE_SIZE))
+    tiles_list.append(imgs)  # Corrected to append to tiles_list
 
 # Scale the images once
 scaled_bg = pygame.transform.scale(Background, (SCREEN_WIDTH + SIDE_MARGIN, SCREEN_HEIGHT + LOWER_MARGIN))
