@@ -32,9 +32,9 @@ moving_right = False
 shoot = False
 
 bullet_img = pygame.image.load('img/bullet.png').convert_alpha()
-shield_box_img = pygame.image.load('img/collectables/Shield.png').convert_alpha()
-key_box_img = pygame.image.load('img/collectables/Key.png').convert_alpha()
-speed_box_img= pygame.image.load('img/collectables/Speed.png').convert_alpha()
+shield_box_img = pygame.image.load('img/Collectables/Shield.png').convert_alpha()
+key_box_img = pygame.image.load('img/Collectables/Key.png').convert_alpha()
+speed_box_img= pygame.image.load('img/Collectables/Speed.png').convert_alpha()
 
 item_boxes = {
     'Shield': shield_box_img,
@@ -146,6 +146,12 @@ class ItemBox(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.midtop = (x + TILE_SIZE // 2,y + (TILE_SIZE - self.image.get_height()))
 
+    def update(self):
+        if pygame.sprite.collide_rect(self, player):
+            if self.item_type == 'Shield':
+                
+
+
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, direction):
         pygame.sprite.Sprite.__init__(self)
@@ -171,11 +177,11 @@ bullet_group = pygame.sprite.Group()
 virus_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
 
-item_box = ItemBox('Shield', 100, 300)
+item_box = ItemBox('Shield', 100, 266)
 item_box_group.add(item_box)
-item_box = ItemBox('Key', 400, 300)
+item_box = ItemBox('Key', 400, 266)
 item_box_group.add(item_box)
-item_box = ItemBox('Speed', 500, 300)
+item_box = ItemBox('Speed', 500, 266)
 item_box_group.add(item_box)
 
 player = EthicalHacker('player',200, 200, 2 , 5 , 50)
