@@ -1,6 +1,11 @@
 # Libraries
 import pygame
+import os
 import random
+import csv
+import level_editor
+import button
+
 # Initialize Pygame
 pygame.init()
 
@@ -18,13 +23,24 @@ pygame.display.set_icon(pygame_icon)
 
 clock = pygame.time.Clock()
 FPS = 60
-
+ROWS = 15
+COLS = 150
 GRAVITY = 0.75
-TILE_SIZE = 32
+TILE_SIZE = SCREEN_HEIGHT // ROWS
+TILE_TYPES = 21
+level = 1
+
 
 moving_left = False
 moving_right = False
 shoot = False
+
+img_list = []
+for x in range(TILE_TYPES):
+    img = pygame.image.load(f'img/Tiles/{x}.png').convert_alpha()
+    img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
+    img_list.append(img)
+
 
 bullet_img = pygame.image.load('img/bullet.png').convert_alpha()
 key_box_img = pygame.image.load('img/Collectables/Key.png').convert_alpha()
@@ -173,7 +189,44 @@ class EthicalHacker(pygame.sprite.Sprite):
 
     def draw(self):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
+class World():
+    def __init__(self):
+        self.obstacle_list = []
+    def process_data(self, data):
+        for y,row in enumerate(data):
+            for x, tile in enumerate(row):
+                if tile >= 0:
+                    img = img_list[tile]
+                    img_rect = img.get_rect()
+                    img_rect.x = x * TILE_SIZE
+                    img_rect.y = y * TILE_SIZE
+                    tile_data = (img,img_rect,)
+                    if tile >= 5 and tile <= 9:
+                        self.obstacle_list.append(tile_data)
+                    elif tile >=10  and tile <=11 :
+                        pass
+                    elif tile >= 1 and tile <= 3:
+                        pass
+                    elif tile == 0:
+                        player = EthicalHacker('player', x * TILE_SIZE,y * TILE_SIZE, 200, 1, 5, 50)
+                    elif tile == 4:
+                        virus = EthicalHacker('virus', x * TILE_SIZE,y * TILE_SIZE, 1, 5, 0)
+                        virus_group.add(virus)
+                    elif tile == 1:
+                        item_box = ItemBox('Key', x * TILE_SIZE,y * TILE_SIZE)
+                        item_box_group.add(item_box)
+                    elif tile == 2:
+                        item_box = ItemBox('Speed', x * TILE_SIZE,y * TILE_SIZE)
+                        item_box_group.add(item_box)
+                    elif tile == 11:
+                        pass
+        return player
 
+    def draw(self):
+        for tile in self.obstacle_list:
+            screen.blit(tile[0], tile[1])              
+
+                    
 # Item Box Class
 class ItemBox(pygame.sprite.Sprite):
     def __init__(self, item_type, x, y):
@@ -239,11 +292,27 @@ def display_ammo(x,y):
 def display_keys(x,y):
     score_img = font.render(f"Keys : {player.keys}", True ,( 255 , 255 ,255))
     screen.blit(score_img, (x, y))
+
+
+world_data = []
+for row in range(ROWS) :
+    r = [-1] * COLS
+    world_data.append(r)
+with open(f"level{level}_data.csv" , newLine='') as csvfile:
+    reader = csv.reader(csvfile , delimiter =',')
+    for x,row in enumerate(reader):
+        for y,tile in enumerate(row):
+            world_data[x][y] = int(tile)
+world = World()
+player = world.process_data(world_data)
+
+
 # Main Game Loop
 run = True
 while run:
     clock.tick(FPS)
     draw_bg()
+    world.draw()
     display_ammo(fontX, fontY)
     display_keys(fontX , fontY + 40)
  
