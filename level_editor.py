@@ -65,8 +65,8 @@ def draw_text(text, font, text_col, x, y):
 #create empty tile list
 world_data = []
 for row in range(ROWS):
-	r = [-1] * MAX_COLS
-	world_data.append(r)
+    r = [-1] * MAX_COLS
+    world_data.append(r)
 
 # Create Function for Drawing the Background
 def draw_bg():
@@ -82,7 +82,7 @@ def draw_grid():
     for c in range(MAX_COLS + 1):
         pygame.draw.line(screen, WHITE, (c * TILE_SIZE - scroll, 0), (c * TILE_SIZE - scroll, SCREEN_HEIGHT))
     # Horizontal Lines
-    for c in range(ROWS + 1):
+for c in range(ROWS + 1):
         pygame.draw.line(screen, WHITE, (0, c * TILE_SIZE), (SCREEN_WIDTH, c * TILE_SIZE))
 
 
