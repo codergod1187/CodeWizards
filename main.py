@@ -1,11 +1,7 @@
 # Libraries
+# Libraries
 import pygame
-import os
 import random
-import csv
-import level_editor
-import button
-
 # Initialize Pygame
 pygame.init()
 
@@ -23,30 +19,22 @@ pygame.display.set_icon(pygame_icon)
 
 clock = pygame.time.Clock()
 FPS = 60
-ROWS = 15
-COLS = 150
-GRAVITY = 0.75
-TILE_SIZE = SCREEN_HEIGHT // ROWS
-TILE_TYPES = 21
-level = 1
 
+GRAVITY = 0.30
+GRAVITY = 0.75
+TILE_SIZE = 32
 
 moving_left = False
 moving_right = False
 shoot = False
 
-img_list = []
-for x in range(TILE_TYPES):
-    img = pygame.image.load(f'img/Tiles/{x}.png').convert_alpha()
-    img = pygame.transform.scale(img, (TILE_SIZE, TILE_SIZE))
-    img_list.append(img)
-
-
 bullet_img = pygame.image.load('img/bullet.png').convert_alpha()
+shield_box_img = pygame.image.load('img/Collectables/Shield.png').convert_alpha()
 key_box_img = pygame.image.load('img/Collectables/Key.png').convert_alpha()
 speed_box_img = pygame.image.load('img/Collectables/Speed.png').convert_alpha()
 
 item_boxes = {
+    'Shield': shield_box_img,
     'Key': key_box_img,
     'Speed': speed_box_img
 }
@@ -54,7 +42,6 @@ num_1 = random.randint(0, 9)
 num_2 = random.randint(0, 9)
 num_3 = random.randint(0, 9)
 num_4 = random.randint(0, 9)
-
 key_nums = {
     1 : num_1,
     2 : num_2,
@@ -150,6 +137,17 @@ class EthicalHacker(pygame.sprite.Sprite):
             self.ammo -= 1
 
     def ai(self):
+        if self.alive and player.alive:
+            if self.direction==1:
+                ai_moving_right = True
+            else:
+                ai_moving_right = False
+            ai_moving_left = not ai_moving_right
+            self.move(ai_moving_left, ai_moving_right)
+            self.move_counter += 1 
+            if self.move_counter > TILE_SIZE:
+                self.direction *= -1
+                self.move_counter *= -1
         if self.char_type == 'virus':
             if self.health <= 0:
                 self.health = 0
@@ -164,13 +162,9 @@ class EthicalHacker(pygame.sprite.Sprite):
                 ai_moving_left = not ai_moving_right
                 self.move(ai_moving_left, ai_moving_right)
                 self.move_counter += 1 
-
                 if self.move_counter > TILE_SIZE:
                     self.direction *= -1
                     self.move_counter *= -1
-
-    
-
     def update_animation(self):
         ANIMATION_COOLDOWN = 100
 
@@ -189,44 +183,7 @@ class EthicalHacker(pygame.sprite.Sprite):
 
     def draw(self):
         screen.blit(pygame.transform.flip(self.image, self.flip, False), self.rect)
-class World():
-    def __init__(self):
-        self.obstacle_list = []
-    def process_data(self, data):
-        for y,row in enumerate(data):
-            for x, tile in enumerate(row):
-                if tile >= 0:
-                    img = img_list[tile]
-                    img_rect = img.get_rect()
-                    img_rect.x = x * TILE_SIZE
-                    img_rect.y = y * TILE_SIZE
-                    tile_data = (img,img_rect,)
-                    if tile >= 5 and tile <= 9:
-                        self.obstacle_list.append(tile_data)
-                    elif tile >=10  and tile <=11 :
-                        pass
-                    elif tile >= 1 and tile <= 3:
-                        pass
-                    elif tile == 0:
-                        player = EthicalHacker('player', x * TILE_SIZE,y * TILE_SIZE, 200, 1, 5, 50)
-                    elif tile == 4:
-                        virus = EthicalHacker('virus', x * TILE_SIZE,y * TILE_SIZE, 1, 5, 0)
-                        virus_group.add(virus)
-                    elif tile == 1:
-                        item_box = ItemBox('Key', x * TILE_SIZE,y * TILE_SIZE)
-                        item_box_group.add(item_box)
-                    elif tile == 2:
-                        item_box = ItemBox('Speed', x * TILE_SIZE,y * TILE_SIZE)
-                        item_box_group.add(item_box)
-                    elif tile == 11:
-                        pass
-        return player
 
-    def draw(self):
-        for tile in self.obstacle_list:
-            screen.blit(tile[0], tile[1])              
-
-                    
 # Item Box Class
 class ItemBox(pygame.sprite.Sprite):
     def __init__(self, item_type, x, y):
@@ -240,10 +197,10 @@ class ItemBox(pygame.sprite.Sprite):
         if pygame.sprite.collide_rect(self, player):
             if self.item_type == 'Key':
                 player.keys += 1
-
             if self.item_type == 'Speed':
                 # Gradual speed boost: increase speed by 0.5 every 100ms for 5 seconds
                 pygame.time.set_timer(pygame.USEREVENT + 1, 100)  # Trigger every 100ms
+                player.speed_boost_steps = 10  # Total increments (5 seconds total)
                 player.speed_boost_steps += 20  # Total increments (5 seconds total)
             self.kill()
 
@@ -277,13 +234,15 @@ virus_group = pygame.sprite.Group()
 item_box_group = pygame.sprite.Group()
 
 # Item Boxes
-
+item_box = ItemBox('Shield', 100, 268)
+item_box_group.add(item_box)
 item_box = ItemBox('Key', 400, 268)
 item_box_group.add(item_box)
 item_box = ItemBox('Speed', 500, 268)
 item_box_group.add(item_box)
 
 # Player and Virus
+player = EthicalHacker('player', 200, 200, 2, 5, 50)
 player = EthicalHacker('player', 200, 200, 1, 5, 50)
 virus = EthicalHacker('virus', 400, 200, 2, 5, 0)
 def display_ammo(x,y):
@@ -292,30 +251,14 @@ def display_ammo(x,y):
 def display_keys(x,y):
     score_img = font.render(f"Keys : {player.keys}", True ,( 255 , 255 ,255))
     screen.blit(score_img, (x, y))
-
-
-world_data = []
-for row in range(ROWS) :
-    r = [-1] * COLS
-    world_data.append(r)
-with open(f"level{level}_data.csv" , newLine='') as csvfile:
-    reader = csv.reader(csvfile , delimiter =',')
-    for x,row in enumerate(reader):
-        for y,tile in enumerate(row):
-            world_data[x][y] = int(tile)
-world = World()
-player = world.process_data(world_data)
-
-
 # Main Game Loop
 run = True
 while run:
     clock.tick(FPS)
     draw_bg()
-    world.draw()
     display_ammo(fontX, fontY)
     display_keys(fontX , fontY + 40)
- 
+
     player.update()
     bullet_group.update()
     item_box_group.update()
@@ -379,3 +322,4 @@ while run:
     pygame.display.update()
 
 pygame.quit()
+               
