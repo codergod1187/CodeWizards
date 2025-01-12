@@ -1,5 +1,4 @@
 # Libraries
-# Libraries
 import pygame
 import random
 # Initialize Pygame
@@ -20,9 +19,12 @@ pygame.display.set_icon(pygame_icon)
 clock = pygame.time.Clock()
 FPS = 60
 
-GRAVITY = 0.30
 GRAVITY = 0.75
-TILE_SIZE = 32
+ROWS = 16
+COLS = 150
+TILE_SIZE = SCREEN_HEIGHT // ROWS
+TILE_TYPES = 12
+level = 1
 
 moving_left = False
 moving_right = False
@@ -322,4 +324,3 @@ while run:
     pygame.display.update()
 
 pygame.quit()
-               
